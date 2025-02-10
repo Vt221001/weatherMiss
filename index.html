@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dark Mode Toggle</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+  </head>
+  <body class="transition-all duration-300 h-auto overflow-x-hidden py-[20px]">
+    <!-- Dark/Light mode toggle -->
+    <i
+      id="sun"
+      class="fa-solid fa-sun text-blue-500 text-[40px] mt-6 ml-6 cursor-pointer"
+    ></i>
+
+    <!-- Container -->
+    <div
+      id="borderColorChange"
+      class="border-2 border-black w-[90%] sm:w-[70%] md:w-[60%] lg:w-[50%] h-auto mt-5 m-auto transition-all duration-300 p-4"
+    >
+      <!-- Search Bar -->
+      <div class="w-full flex flex-nowrap justify-between items-center gap-3">
+        <!-- Search area -->
+        <div class="w-[60%]" id="searchArea">
+          <input
+            type="text"
+            id="searchBar"
+            class="w-full border-2 rounded-full pl-5 h-10 border-black transition-all duration-300"
+            placeholder="Search Name of Country"
+          />
+        </div>
+        <!-- Search button -->
+        <div class="w-[20%] flex justify-center">
+          <button
+            id="searchBtn"
+            class="bg-blue-500 text-white rounded-full h-10 w-[100px] cursor-pointer"
+          >
+            Search
+          </button>
+        </div>
+        <!-- Voice button -->
+        <div class="w-[20%] flex justify-center">
+          <button
+            id="voiceBtn"
+            class="bg-blue-500 w-12 h-12 text-white rounded-full cursor-pointer flex justify-center items-center"
+          >
+            <i class="fa-solid fa-microphone text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Weather Area -->
+      <div class="flex flex-col align-middle items-center mt-12">
+        <div><img class="w-[70%] m-auto" src="" alt="" /></div>
+        <div
+          id="temp"
+          class="text-center text-[60px] sm:text-[80px] md:text-[100px] font-bold"
+        ></div>
+        <div
+          id="city"
+          class="text-center text-[40px] sm:text-[60px] md:text-[80px]"
+        ></div>
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+      // Dark/Light mode toggle
+      const sun = document.getElementById("sun");
+      const searchBar = document.getElementById("searchBar");
+      const border = document.getElementById("borderColorChange");
+      const div = document.querySelectorAll("div");
+      const body = document.body;
+
+      sun.addEventListener("click", () => {
+        const isDarkMode = sun.classList.contains("fa-sun");
+
+        if (isDarkMode) {
+          // Switch to dark mode
+          body.style.backgroundColor = "#000";
+          body.style.backgroundImage = "url('/weather/DarkImg.jpg')";
+          searchBar.style.backgroundColor = "#fff";
+          searchBar.style.color = "#000";
+          border.style.borderColor = "#fff";
+          div.forEach((div) => {
+            div.style.color = "#fff";
+          });
+
+          // Change icon to moon
+          sun.classList.remove("fa-sun");
+          sun.classList.add("fa-moon");
+        } else {
+          // Switch to light mode
+          body.style.backgroundColor = "#fff";
+          body.style.backgroundImage = "url('/weather/LightImg.jpg')";
+          border.style.borderColor = "#000";
+          div.forEach((div) => {
+            div.style.color = "#000";
+          });
+
+          // Change icon back to sun
+          sun.classList.remove("fa-moon");
+          sun.classList.add("fa-sun");
+        }
+      });
+
+      //api of weather
+      const apiKey = "dbd0bb89dad3907d9fa77489f2935ff1";
+      const url =
+        "https://api.openweathermap.org/data/2.5/weather?units=metric&q=";
+      const temp = document.getElementById("temp");
+      const city = document.getElementById("city");
+      const searchBtn = document.getElementById("searchBtn");
+      const searchBox = document.querySelector("#searchArea input");
+      const voiceBtn = document.getElementById("voiceBtn");
+      async function getWeather(cityName) {
+        try {
+          if (!cityName) {
+            alert("Please enter a city name!");
+            return;
+          }
+
+          const response = await fetch(url + cityName + "&appid=" + apiKey);
+          const data = await response.json();
+          console.log(data);
+
+          if (data.cod !== 200) {
+            alert("City not found! Please enter a valid city name.");
+            return;
+          }
+
+          temp.innerHTML = Math.round(data.main.temp) + "°C";
+          city.innerText = data.name;
+
+          if (data.weather[0].main == "Clouds") {
+            document.querySelector("img").src = "./Cloudy.png";
+          } else if (data.weather[0].main == "Rain") {
+            document.querySelector("img").src = "./Rain.png";
+          } else if (data.weather[0].main == "Clear") {
+            document.querySelector("img").src = "./Sunny.png";
+          } else if (data.weather[0].main == "Snow") {
+            document.querySelector("img").src = "./Snow.png";
+          } else if (data.weather[0].main == "Thunderstorm") {
+            document.querySelector("img").src = "./Storm.png";
+          } else if (data.weather[0].main == "Drizzle") {
+            document.querySelector("img").src = "./Windy.webp";
+          } else {
+            document.querySelector("img").src = "./Cloudy.png";
+          }
+
+          localStorage.setItem("lastCity", data.name);
+          localStorage.setItem("lastTemp", Math.round(data.main.temp) + "°C");
+          localStorage.setItem("lastIcon", data.weather[0].main);
+        } catch (error) {
+          console.error("Error fetching weather data:", error);
+          alert("Something went wrong. Please try again later.");
+        }
+      }
+
+      function startVoiceRecognition() {
+        if (!("webkitSpeechRecognition" in window)) {
+          alert(
+            "Your browser doesn't support speech recognition. Try using Chrome."
+          );
+          return;
+        }
+
+        const recognition = new webkitSpeechRecognition();
+        recognition.lang = "en-US"; // Set language
+        recognition.start(); // Start listening
+
+        recognition.onresult = function (event) {
+          const spokenText = event.results[0][0].transcript; // Get spoken text
+          searchBox.value = spokenText; // Set it in the input field
+          getWeather(spokenText.replace(/[^a-zA-Z\s]/g, "").trim());
+        };
+
+        recognition.onerror = function (event) {
+          alert("Speech recognition failed. Try again!");
+        };
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        const searchBtn = document.getElementById("searchBtn");
+        body.style.backgroundImage = "url('/weather/LightImg.jpg')";
+        searchBtn.addEventListener("click", () => {
+          getWeather(searchBox.value.trim());
+        });
+        const savedCity = localStorage.getItem("lastCity");
+        const savedTemp = localStorage.getItem("lastTemp");
+        const savedIcon = localStorage.getItem("lastIcon");
+
+        if (savedCity && savedTemp) {
+          temp.innerHTML = savedTemp;
+          city.innerText = savedCity;
+          if (savedIcon == "Clouds") {
+            document.querySelector("img").src = "./Cloudy.png";
+          } else if (savedIcon == "Rain") {
+            document.querySelector("img").src = "./Rain.png";
+          } else if (savedIcon == "Clear") {
+            document.querySelector("img").src = "./Sunny.png";
+          } else if (savedIcon == "Snow") {
+            document.querySelector("img").src = "./Snow.png";
+          } else if (savedIcon == "Thunderstorm") {
+            document.querySelector("img").src = "./Storm.png";
+          } else if (savedIcon == "Drizzle") {
+            document.querySelector("img").src = "./Windy.webp";
+          }
+        }
+
+        voiceBtn.addEventListener("click", startVoiceRecognition);
+      });
+    </script>
+  </body>
+</html>
